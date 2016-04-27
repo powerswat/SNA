@@ -15,8 +15,8 @@ for i=1:length(numBins)
     numBins(i) = {floor(ltstTS - erlstTS + 1)};
     h = histogram(tsData{i}, cell2mat(numBins(i)));
     
-    binEdges(i) = {h.BinEdges}';
-    values(i) = {h.Values}';
+    binEdges(i) = {h.BinEdges'};
+    values(i) = {h.Values'};
     midBin = zeros(length(binEdges{i})-1, 1);
     for j=2:length(binEdges{i})
         midBin(j-1) = (binEdges{i}(j-1) + binEdges{i}(j)) / 2;

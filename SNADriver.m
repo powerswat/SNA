@@ -8,8 +8,8 @@ numFiles = 4;
 chatPaths = cell(numFiles,1);
 chatPaths(1) = {'Original Data\2009-01-01\2009_01_01_idiscuss_chat.xlsx'};
 chatPaths(2) = {'Original Data\2009-01-501\tkt4803_2009_01_501_idiscuss_chat.xlsx'};
-chatPaths(3) = {'Original Data\2010-01-01\tkt4803_2010_01_01_idiscuss_chat.xls'};
-chatPaths(4) = {'Original Data\2010-01-501\tkt4803_2010_01_501_idiscuss_chat.xls'};
+chatPaths(3) = {'Original Data\2010-01-01\tkt4803_2010_01_01_idiscuss_chat.xlsx'};
+chatPaths(4) = {'Original Data\2010-01-501\tkt4803_2010_01_501_idiscuss_chat.xlsx'};
 
 chatStrs = cell(numFiles,1);
 for i=1:numFiles
