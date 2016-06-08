@@ -4,7 +4,6 @@ global basePath;
 
 users = cell(numFiles, 1);
 usrDataIdcs = cell(numFiles, 1);
-% numUsers = zeros(numFiles, 1);
 userTSs = cell(numFiles, 1);
 
 for i=1:numFiles
