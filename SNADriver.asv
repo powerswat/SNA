@@ -110,30 +110,59 @@ disp(num2str(accuNormRF));
 
 %% Classfication using a boosted decision tree (Adaboost)
 % AdaBoost analysis on sent messages
-[modelSnt, accuBTSnt, tpSnt, tnSnt] = runAdaBoost(ldrSntGraphs, fllSntGraphs)
-[modelNormSnt, accuNormBTSnt, tpNormSnt, tnNormSnt] = runAdaBoost(ldrNormSntGraphs, fllNormSntGraphs)
+[modelSnt, accuBTSnt, fpSnt, fnSnt] = runAdaBoost(ldrSntGraphs, fllSntGraphs)
+[modelNormSnt, accuNormBTSnt, fpNormSnt, fnNormSnt] = runAdaBoost(ldrNormSntGraphs, fllNormSntGraphs)
 
 % AdaBoost analysis on received messages
-[modelRcv, accuBTRcv, tpRcv, tnRcv] = runAdaBoost(ldrRcvGraphs, fllRcvGraphs)
-[modelNormRcv, accuNormBTRcv, tpNormRcv, tnNormRcv] = runAdaBoost(ldrNormRcvGraphs, fllNormRcvGraphs)
+[modelRcv, accuBTRcv, fpRcv, fnRcv] = runAdaBoost(ldrRcvGraphs, fllRcvGraphs)
+[modelNormRcv, accuNormBTRcv, fpNormSnt, fnNormRcv] = runAdaBoost(ldrNormRcvGraphs, fllNormRcvGraphs)
 
-% % Temp: To derive the most influential criteria
-% vars = cell(size(trnSntX,2),1);
-% for i=1:size(trnSntX,2)
-%     vars{i} = num2str(i);
-% end
-% treeSntNorm = classregtree(trnSntNormX, trnSntNormY, 'method', 'classification', ...
-%     'names', vars, 'prune', 'off');
-% view(treeSntNorm);
+
+fpRcv = 0;
+fpRcvNorm = 0;
+while fpRcv < 0.9 && fpRcvNorm < 0.9
+    % Prepare training and testing data sets
+    trnRatio = 0.9;
+    [trnRcvX, trnRcvY, tstRcvX, tstRcvY, posTrnRcvX, negTrnRcvX] ...
+                = prepTrainTestDataset(ldrRcvGraphs, fllRcvGraphs, trnRatio);
+    [trnRcvNormX, trnRcvNormY, tstRcvNormX, tstRcvNormY, posRcvNormTrnX, negRcvNormTrnX] ...
+                = prepTrainTestDataset(ldrNormRcvGraphs, fllNormRcvGraphs, trnRatio);
+                        
+    rcvModel = adaBoostTrain(negTrnRcvX, posTrnRcvX);
+    rcvModelNorm = adaBoostTrain(negRcvNormTrnX, posRcvNormTrnX);
+
+    fpRcv = mean(adaBoostApply( tstRcvX(tstRcvY == 1,:), rcvModel )>0);
+    fnRcv = mean(adaBoostApply( tstRcvX(tstRcvY == -1,:), rcvModel )<0);
+    accuBT = (fpRcv + fnRcv) / 2;
+
+    fpRcvNorm = mean(adaBoostApply( tstRcvNormX(tstRcvNormY == 1,:), rcvModelNorm )>0);
+    fnRcvNorm = mean(adaBoostApply( tstRcvNormX(tstRcvNormY == -1,:), rcvModelNorm )<0);
+    accuNormBT = (fpRcvNorm + fnRcvNorm) / 2;
+
+    % Display the testing accuracy
+    disp('Testing Accuracy (Boosted, Received, Raw) = ');
+    disp(num2str(accuBT));
+    disp('Testing Accuracy (Boosted, Received, Norm) = ');
+    disp(num2str(accuNormBT));
+end
 
 % Temp: To derive the most influential criteria
-vars = cell(size(trnRcvX,2),1);
-for i=1:size(trnRcvX,2)
+vars = cell(size(trnSntX,2),1);
+for i=1:size(trnSntX,2)
     vars{i} = num2str(i);
 end
-treeRcvNorm = classregtree(trnRcvNormX, trnRcvNormY, 'method', 'classification', ...
+treeSntNorm = classregtree(trnSntNormX, trnSntNormY, 'method', 'classification', ...
     'names', vars, 'prune', 'off');
-view(treeRcvNorm);
+view(treeSntNorm);
+
+% % Temp: To derive the most influential criteria
+% vars = cell(size(trnRcvX,2),1);
+% for i=1:size(trnRcvX,2)
+%     vars{i} = num2str(i);
+% end
+% treeRcvNorm = classregtree(trnRcvNormX, trnRcvNormY, 'method', 'classification', ...
+%     'names', vars, 'prune', 'off');
+% view(treeRcvNorm);
 
 
 end

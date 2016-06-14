@@ -57,13 +57,8 @@ for i=1:size(graphs, 1)
        curLdrIdcs = find(cell2mat(leaderList{i}(2:end, 2)) == j) + 1; 
        curLdrNames = leaderList{i}(curLdrIdcs, 1);
        
-       
-       if comDirection == 1         % Split on received messages
-           tmpG = graphs{i}{j}';
-       else
-           tmpG = graphs{i}{j};
-       end
-           
+       tmpG = graphs{i}{j};
+       if comDi
        
        % Min-Max normalization per chapter
        if isNormalize == 1
