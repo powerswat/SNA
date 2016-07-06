@@ -35,16 +35,13 @@ end
 %   4. Behaving patterns of the leaders and followers on the website
 
 % Generate a lookup table
-idxCell = cell(4, 1);
-idxCell(1) = strtrim({finStr(2:end,5)});
-idxCell(2) = {finNum(:,4)};
-idxCell(3) = {finNum(:,1)};
-
-idxCell(4) = {finNum(:,2)};
-unqSec = unique(idxCell{4}, 'stable');
+idxCell = struct('names', strtrim({finStr(2:end,5)}), ...
+                'classIDs', {finNum(:,4)}, 'graphIDs', {finNum(:,1)}, ...
+                'sections', {finNum(:,2)});
+unqSec = unique(idxCell.sections, 'stable');
 for i=1:length(unqSec)
-    curSecIdcs = find(idxCell{4} == unqSec(i));
-    idxCell{4}(curSecIdcs) = i;
+    curSecIdcs = find(idxCell.sections == unqSec(i));
+    idxCell.sections(curSecIdcs) = i;
 end
 
 [nameUidGidSidTbl] = genLookUpTable(idxCell);
@@ -54,8 +51,8 @@ end
 % ID in different sections
 % [ldrChats, fllChats] = splitCellTwoGroups(chatStrs, leaderList, ...
 %                         nameUidGidSidTbl, 2, numSections, 2, 5);
-[ldrPosts, fllPosts] = splitCellTwoGroups(posts, leaderList, ...
-                        nameUidGidSidTbl, 4, numSections, 2, 8);
+% [ldrPosts, fllPosts] = splitCellTwoGroups(posts, leaderList, ...
+%                         nameUidGidSidTbl, 4, numSections, 2, 8);
 % [ldrTpcVws, fllTpcVws] = splitCellTwoGroups(tpcViews, leaderList, ...
 %                         nameUidGidSidTbl, 1, numSections, 2, 4);
 % [ldrPstRtn, fllPstRtn] = splitCellTwoGroups(pstRtngs, leaderList, ...
