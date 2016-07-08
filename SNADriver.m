@@ -1,10 +1,15 @@
 function SNADriver
 
+%% Program settings
 % Number of sections
 numSections = 4;
 
-%% Load all the data on memory
-basePath = 'C:\Temp\Leadership data\';     % Base directory path
+% Set up paths for the base and data directories
+basePath = 'C:\Temp\Leadership data\';          % Base directory path
+dataPath = [basePath 'Leader Follower Data\'];   % Leader/Follower data path
+
+
+%% Load all the leadership data on disk
 if ~exist([basePath 'input.mat'], 'file')
     [chatStrs, pstRtngs, posts, surveys, tpcViews, finNum, finStr, ...
         finNormNum, finNormStr, leaderList, graphs] = dataLoader(basePath);
@@ -45,6 +50,7 @@ for i=1:length(unqSec)
 end
 
 [nameUidGidSidTbl] = genLookUpTable(idxCell);
+writeInCSV([dataPath 'nameIDLookupTable.csv'], nameUidGidSidTbl, 'lookup_table');
 
 % Split the leaders' data and the followers' data
 % TODO: Need to check the necessity of sepearting the leaders with the same
@@ -59,28 +65,44 @@ end
 %                         nameUidGidSidTbl, 1, numSections, 2, 4);
                     
 % Split the original graph into leaders' and followers' sent graph
-[ldrSntGraphs, fllSntGraphs] = splitGraphTwoGroups(graphs, leaderList, nameUidGidSidTbl, 0, 0);
-[ldrNormSntGraphs, fllNormSntGraphs] = splitGraphTwoGroups( ...
-                                    graphs, leaderList, nameUidGidSidTbl, 1, 0);
+[ldrSntGraphs, fllSntGraphs, ldrSntIDs, fllSntIDs] ...
+    = splitGraphTwoGroups(graphs, leaderList, nameUidGidSidTbl, 0, 0);
+[ldrNormSntGraphs, fllNormSntGraphs, normLdrSntIDs, normFllSntIDs] ...
+    = splitGraphTwoGroups(graphs, leaderList, nameUidGidSidTbl, 1, 0);
 
 % Split the original graph into leaders' and followers' received graph                                
-[ldrRcvGraphs, fllRcvGraphs] = splitGraphTwoGroups(graphs, leaderList, nameUidGidSidTbl, 0, 1);
-[ldrNormRcvGraphs, fllNormRcvGraphs] = splitGraphTwoGroups( ...
-                                    graphs, leaderList, nameUidGidSidTbl, 1, 1);
+[ldrRcvGraphs, fllRcvGraphs, ldrRcvIDs, fllRcvIDs] ...
+    = splitGraphTwoGroups(graphs, leaderList, nameUidGidSidTbl, 0, 1);
+[ldrNormRcvGraphs, fllNormRcvGraphs, normLdrRcvIDs, normFllRcvIDs] ...
+    = splitGraphTwoGroups(graphs, leaderList, nameUidGidSidTbl, 1, 1);
 
 % Prepare training and testing data sets on sent messages
 trnRatio = 0.9;
-[trnSntX, trnSntY, tstSntX, tstSntY, posTrnSntX, negTrnSntX] ...
-                = prepTrainTestDataset(ldrSntGraphs, fllSntGraphs, trnRatio);
-[trnSntNormX, trnSntNormY, tstSntNormX, tstSntNormY, posNormTrnSntX, negNormTrnSntX] ...
-                = prepTrainTestDataset(ldrNormSntGraphs, fllNormSntGraphs, trnRatio);
+[trnSntX, trnSntY, tstSntX, tstSntY, trnSntIDs, tstSntIDs] ...
+        = prepTrainTestDataset(ldrSntGraphs, fllSntGraphs, trnRatio, ...
+                                ldrSntIDs, fllSntIDs);
+[trnSntNormX, trnSntNormY, tstSntNormX, tstSntNormY, ...
+        trnNormSntIDs, tstNormSntIDs] ...
+        = prepTrainTestDataset(ldrNormSntGraphs, fllNormSntGraphs, ...
+                                trnRatio, normLdrSntIDs, normFllSntIDs);
             
- % Prepare training and testing data sets on received messages
-[trnRcvX, trnRcvY, tstRcvX, tstRcvY, posTrnRcvX, negTrnRcvX] ...
-                = prepTrainTestDataset(ldrRcvGraphs, fllRcvGraphs, trnRatio);
-[trnRcvNormX, trnRcvNormY, tstRcvNormX, tstRcvNormY, posRcvNormTrnX, negRcvNormTrnX] ...
-                = prepTrainTestDataset(ldrNormRcvGraphs, fllNormRcvGraphs, trnRatio);
-   
+% Prepare training and testing data sets on received messages
+[trnRcvX, trnRcvY, tstRcvX, tstRcvY, trnRcvIDs, tstRcvIDs] ...
+        = prepTrainTestDataset(ldrRcvGraphs, fllRcvGraphs, trnRatio, ...
+                                ldrRcvIDs, fllRcvIDs);
+[trnRcvNormX, trnRcvNormY, tstRcvNormX, tstRcvNormY, ...
+        trnNormRcvIDs, tstNormRcvIDs] ...
+        = prepTrainTestDataset(ldrNormRcvGraphs, fllNormRcvGraphs, ...
+                                trnRatio, normLdrRcvIDs, normFllRcvIDs);
+
+% Write the training and testing data of the graphs in csv format
+writeGraphFiles(dataPath, trnSntNormX, trnSntNormY, trnSntX, trnSntY ...
+                        , trnRcvNormX, trnRcvNormY, trnRcvX, trnRcvY ...
+                        , tstSntNormX, tstSntNormY, tstSntX, tstSntY ...
+                        , tstRcvNormX, tstRcvNormY, tstRcvX, tstRcvY ...
+                        , trnNormSntIDs, tstNormSntIDs, trnSntIDs, tstSntIDs ...
+                        , trnNormRcvIDs, tstNormRcvIDs, trnRcvIDs, tstRcvIDs)
+                    
 
 %% Classification using Random Forest
 % Test on the testing dataset
@@ -108,11 +130,13 @@ disp(num2str(accuNormRF));
 %% Classfication using a boosted decision tree (Adaboost)
 % AdaBoost analysis on sent messages
 [modelSnt, accuBTSnt, tpSnt, tnSnt] = runAdaBoost(ldrSntGraphs, fllSntGraphs)
-[modelNormSnt, accuNormBTSnt, tpNormSnt, tnNormSnt] = runAdaBoost(ldrNormSntGraphs, fllNormSntGraphs)
+[modelNormSnt, accuNormBTSnt, tpNormSnt, tnNormSnt] ...
+    = runAdaBoost(ldrNormSntGraphs, fllNormSntGraphs)
 
 % AdaBoost analysis on received messages
 [modelRcv, accuBTRcv, tpRcv, tnRcv] = runAdaBoost(ldrRcvGraphs, fllRcvGraphs)
-[modelNormRcv, accuNormBTRcv, tpNormRcv, tnNormRcv] = runAdaBoost(ldrNormRcvGraphs, fllNormRcvGraphs)
+[modelNormRcv, accuNormBTRcv, tpNormRcv, tnNormRcv] ...
+    = runAdaBoost(ldrNormRcvGraphs, fllNormRcvGraphs)
 
 % % Temp: To derive the most influential criteria
 % vars = cell(size(trnSntX,2),1);
