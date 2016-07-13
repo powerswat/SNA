@@ -20,7 +20,8 @@ for i=1:length(rmvGid)
     rmvName = char(nameUidGidSidTbl( ...
                 find(cell2mat(nameUidGidSidTbl(:,3)) == rmvGid(i)), 1));
     for j=1:numCell
-        rmvIdxLdrList = find(~cellfun(@isempty, strfind(leaderList{j}(:,1), rmvName)));
+        rmvIdxLdrList = find(~cellfun(@isempty, ...
+                                strfind(leaderList{j}(:,1), rmvName)));
         if ~isempty(rmvIdxLdrList)
             leaderList{j}(rmvIdxLdrList,:) = [];
         end

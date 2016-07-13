@@ -11,7 +11,7 @@ if strcmp(mode, 'lookup_table')
                 fprintf(fid, '%f,', data{i,j});
             end
         end
-        fprintf(fid, '%f\r\n', data{i,j});
+        fprintf(fid, '%f\r\n', data{i,colSize});
     end
 elseif strcmp(mode, 'graph')
     csvwrite(filePath, data);
